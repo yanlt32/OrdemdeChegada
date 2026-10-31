@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3eee4">
+  <title>Fila · Barbearia do Wagner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="listra" aria-hidden="true"></div>
+
+  <main class="cliente">
+    <header class="cabecalho">
+      <div class="brand-name">Barbearia do Wagner</div>
+      <div class="brand-sub">Fila por ordem de chegada</div>
+    </header>
+
+    <div class="agora" id="agora">
+      <span id="agora-texto">Conectando…</span>
+      <span id="agora-fila" class="num"></span>
+    </div>
+
+    <!-- Cadastro -->
+    <section id="tela-cadastro" hidden>
+      <h1 class="titulo">Pegue sua senha</h1>
+      <p class="sub">Acompanhe sua posição por aqui. Quando chegar a sua vez, o celular avisa.</p>
+
+      <div class="tolerancia">
+        <b class="num"><span class="tol-min">5</span>min</b>
+        <span>de <strong>tolerância</strong> quando chegar a sua vez. Passou disso, a vez vai para o próximo.</span>
+      </div>
+
+      <form class="card" id="form-entrar" autocomplete="on">
+        <div class="field">
+          <label for="nome">Nome e sobrenome</label>
+          <input type="text" id="nome" name="name" autocomplete="name" maxlength="40" placeholder="Ex.: João Pereira" required>
+          <span class="ajuda">Seu nome de verdade, é assim que o Wagner vai te chamar.</span>
+        </div>
+        <div class="field">
+          <label for="telefone">WhatsApp</label>
+          <input type="tel" id="telefone" name="tel" autocomplete="tel-national" inputmode="numeric" maxlength="15" placeholder="(11) 98765-4321" required>
+          <span class="ajuda">Para o Wagner te avisar quando for a sua vez.</span>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="btn-entrar">Entrar na fila</button>
+        <p class="erro" id="erro-entrar"></p>
+      </form>
+    </section>
+
+    <!-- Fila fechada -->
+    <section id="tela-fechada" class="fechada" hidden>
+      <h2>Fila fechada</h2>
+      <p>O Wagner não está recebendo novos clientes agora. Volte mais tarde ou fale com ele pessoalmente.</p>
+    </section>
+
+    <!-- Minha senha -->
+    <section id="tela-senha" hidden>
+      <div class="ticket" id="ticket">
+        <div class="ticket-topo">
+          <span class="ticket-rotulo">Sua senha</span>
+          <div class="ticket-numero num" id="t-numero">—</div>
+          <div class="ticket-nome" id="t-nome"></div>
+        </div>
+        <div class="ticket-status" id="t-status"></div>
+      </div>
+      <div class="tolerancia" id="tolerancia-senha">
+        <b class="num"><span class="tol-min">5</span>min</b>
+        <span>de <strong>tolerância</strong> quando for chamado. Passou disso, a vez vai para o próximo.</span>
+      </div>
+    </section>
+
+    <section class="secao">
+      <h2 class="card-title"><span>Fila agora</span><small class="num" id="fila-total"></small></h2>
+      <ul class="lista" id="lista"></ul>
+    </section>
+  </main>
+
+  <script src="/cliente.js"></script>
+</body>
+</html>

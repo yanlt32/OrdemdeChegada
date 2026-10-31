@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3eee4">
+  <title>Painel · Barbearia do Wagner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="listra" aria-hidden="true"></div>
+
+  <!-- Login -->
+  <div class="login" id="tela-login" hidden>
+    <form class="card" id="form-login">
+      <div class="brand-name">Barbearia do Wagner</div>
+      <div class="brand-sub">Painel do barbeiro</div>
+      <div class="field">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" autocomplete="current-password" autofocus required>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+      <p class="erro" id="erro-login"></p>
+    </form>
+  </div>
+
+  <!-- Painel -->
+  <main class="painel" id="tela-painel" hidden>
+    <header class="topo">
+      <div>
+        <div class="brand-name">Barbearia do Wagner</div>
+        <div class="brand-sub link-clientes" id="link-clientes">Painel do barbeiro</div>
+      </div>
+      <div class="segmentado" id="estado" role="group" aria-label="Situação da fila">
+        <button data-estado="aberto"><span class="dot aberto"></span>Aberto</button>
+        <button data-estado="pausado"><span class="dot pausado"></span>Pausa</button>
+        <button data-estado="fechado"><span class="dot fechado"></span>Fechado</button>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi destaque"><span>Cortes hoje</span><b class="num" id="k-hoje">0</b><small id="k-manuais"></small></div>
+      <div class="kpi"><span>Total de cortes</span><b class="num" id="k-total">0</b><small>desde o início</small></div>
+      <div class="kpi"><span>Esperando</span><b class="num" id="k-fila">0</b><small id="k-espera"></small></div>
+      <div class="kpi"><span>Perderam a vez</span><b class="num" id="k-perderam">0</b><small>hoje</small></div>
+      <div class="kpi"><span>Tempo médio</span><b class="num" id="k-media">—</b><small>por corte</small></div>
+    </section>
+
+    <div class="grade">
+      <div class="coluna">
+        <section class="card cadeira" id="cadeira"></section>
+
+        <section class="card">
+          <h2 class="card-title">Cadastrar quem não tem celular</h2>
+          <form id="form-adicionar">
+            <div class="form-linha">
+              <div class="field">
+                <label for="a-nome">Nome</label>
+                <input type="text" id="a-nome" maxlength="40" placeholder="Nome do cliente" required>
+              </div>
+              <div class="field">
+                <label for="a-tel">Telefone <span class="hint">(opcional)</span></label>
+                <input type="tel" id="a-tel" inputmode="numeric" maxlength="15" placeholder="(11) 90000-0000">
+              </div>
+              <button class="btn btn-primary" type="submit">Pôr na fila</button>
+            </div>
+            <p class="erro" id="erro-adicionar"></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title"><span>Cortes por dia</span><small>últimos 7 dias</small></h2>
+          <div class="barras" id="por-dia"></div>
+        </section>
+      </div>
+
+      <div class="coluna">
+        <section class="card">
+          <h2 class="card-title"><span>Fila</span><small class="num" id="fila-total"></small></h2>
+          <ul class="lista" id="lista-fila"></ul>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Já passaram hoje</h2>
+          <ul class="lista" id="lista-encerrados"></ul>
+        </section>
+
+        <section class="card">
+          <details class="config">
+            <summary>Configurações</summary>
+            <form id="form-config">
+              <div class="field">
+                <label for="c-limite">Tolerância (minutos)</label>
+                <input type="number" id="c-limite" min="1" max="60" required style="max-width: 120px">
+              </div>
+              <div class="field">
+                <label for="c-mensagem">Mensagem quando chega a vez</label>
+                <textarea id="c-mensagem" rows="4" maxlength="500" required></textarea>
+                <span class="ajuda">{nome} vira o primeiro nome, {numero} a senha e {minutos} a tolerância.</span>
+              </div>
+              <button class="btn btn-primary" type="submit">Salvar</button>
+              <p class="erro" id="erro-config"></p>
+              <div class="config-rodape">
+                <button class="btn btn-ghost-red" type="button" id="btn-encerrar">Encerrar o dia</button>
+                <button class="btn" type="button" id="btn-sair">Sair do painel</button>
+              </div>
+            </form>
+          </details>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="/admin.js"></script>
+</body>
+</html>

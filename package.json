@@ -1,0 +1,12 @@
+{
+  "name": "fila-barbearia-wagner",
+  "version": "1.0.0",
+  "description": "Fila por ordem de chegada para a Barbearia do Wagner",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
