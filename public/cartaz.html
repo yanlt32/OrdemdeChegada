@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cartaz · Barbearia do Wagner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { background: #e9e3d7; }
+    .folha {
+      width: 210mm; min-height: 297mm; margin: 24px auto; background: #fff;
+      display: flex; flex-direction: column; box-shadow: 0 10px 40px -20px rgba(0, 0, 0, 0.4);
+    }
+    .folha .listra { height: 14mm; }
+    .miolo { flex: 1; padding: 16mm 18mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .miolo .brand-name { font-size: 12mm; }
+    .titulo-cartaz { font-family: var(--display); font-weight: 700; font-size: 26mm; line-height: 0.9; text-transform: uppercase; margin: 10mm 0 4mm; }
+    .sub-cartaz { font-size: 6mm; color: var(--tinta-2); max-width: 150mm; }
+    .qr { width: 110mm; height: 110mm; margin: 10mm 0 6mm; }
+    .link { font-family: ui-monospace, Consolas, monospace; font-size: 4.6mm; }
+    .regras { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; width: 100%; margin-top: auto; padding-top: 10mm; border-top: 1mm solid var(--tinta); text-align: left; }
+    .regras b { display: block; font-family: var(--display); font-size: 14mm; line-height: 1; color: var(--vermelho); }
+    .regras > div > span { font-size: 4.6mm; }
+    .imprimir { display: block; margin: 0 auto 24px; }
+    @media print {
+      @page { size: A4; margin: 0; }
+      body { background: #fff; }
+      .folha { margin: 0; box-shadow: none; }
+      .imprimir { display: none; }
+      .listra { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="folha">
+    <div class="listra" aria-hidden="true"></div>
+    <div class="miolo">
+      <div class="brand-name">Barbearia do Wagner</div>
+      <h1 class="titulo-cartaz">Pegue sua<br>senha aqui</h1>
+      <p class="sub-cartaz">Aponte a câmera do celular para o código, coloque seu nome e WhatsApp e acompanhe a fila de onde estiver.</p>
+      <img class="qr" src="/api/qr.svg" alt="QR Code da fila">
+      <div class="link" id="link"></div>
+      <div class="regras">
+        <div><b><span class="num" id="tol">5</span> min</b><span>de tolerância quando chegar a sua vez. Passou disso, a vez vai para o próximo.</span></div>
+        <div><b>Sem celular?</b><span>Fale com o Wagner que ele coloca você na fila.</span></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary imprimir" onclick="print()">Imprimir cartaz</button>
+
+  <script>
+    fetch('/api/link').then((r) => r.json()).then(({ url }) => { document.getElementById('link').textContent = url.replace(/^https?:\/\//, ''); });
+    const fonte = new EventSource('/api/stream');
+    fonte.onmessage = (e) => { document.getElementById('tol').textContent = JSON.parse(e.data).limiteMinutos; fonte.close(); };
+  </script>
+</body>
+</html>

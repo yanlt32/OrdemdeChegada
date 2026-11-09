@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TV · Barbearia do Wagner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    .tv { height: calc(100vh - 8px); display: grid; grid-template-columns: 3fr 2fr; }
+    .tv-agora { display: flex; flex-direction: column; justify-content: center; padding: 4vh 5vw; }
+    .tv-rotulo { font-family: var(--display); font-weight: 700; font-size: 4vh; text-transform: uppercase; color: var(--tinta-2); }
+    .tv-numero { font-family: var(--display); font-weight: 700; font-size: 34vh; line-height: 0.85; letter-spacing: -0.02em; margin: 2vh 0; }
+    .tv-nome { font-size: 6vh; font-weight: 600; line-height: 1.1; }
+    .tv-tempo { font-family: var(--display); font-weight: 700; font-size: 9vh; color: var(--vermelho); margin-top: 3vh; }
+    .tv-tempo small { font-family: var(--texto); font-weight: 500; font-size: 2.6vh; color: var(--tinta-2); display: block; }
+    .tv.chamado .tv-agora { background: var(--vermelho); color: #fff; }
+    .tv.chamado .tv-rotulo, .tv.chamado .tv-tempo, .tv.chamado .tv-tempo small { color: #fff; }
+    .tv-lado { background: var(--cartao); border-left: 1px solid var(--linha); display: flex; flex-direction: column; padding: 4vh 3vw; }
+    .tv-lado h2 { font-family: var(--display); font-weight: 700; font-size: 4vh; text-transform: uppercase; border-bottom: 3px solid var(--tinta); padding-bottom: 1vh; }
+    .tv-fila { list-style: none; margin: 0; padding: 0; flex: 1; }
+    .tv-fila li { display: flex; gap: 2vw; align-items: baseline; padding: 1.4vh 0; border-bottom: 1px solid var(--linha); font-size: 3.6vh; }
+    .tv-fila b { font-family: var(--display); font-size: 5vh; min-width: 5vw; }
+    .tv-fila .mais { color: var(--tinta-2); font-size: 2.8vh; border: 0; }
+    .tv-qr { display: flex; align-items: center; gap: 2vw; padding-top: 2vh; border-top: 3px solid var(--tinta); }
+    .tv-qr img { width: 18vh; height: 18vh; }
+    .tv-qr strong { font-family: var(--display); font-size: 4.4vh; text-transform: uppercase; line-height: 1; display: block; }
+    .tv-qr span { font-size: 2.4vh; color: var(--tinta-2); }
+    .som { position: fixed; left: 16px; bottom: 16px; }
+    @keyframes chamou { 0%, 100% { filter: none; } 50% { filter: brightness(1.35); } }
+    .tv.piscando .tv-agora { animation: chamou 0.6s 4; }
+  </style>
+</head>
+<body>
+  <div class="listra" aria-hidden="true"></div>
+  <main class="tv" id="tv">
+    <section class="tv-agora">
+      <div class="tv-rotulo" id="rotulo">Conectando…</div>
+      <div class="tv-numero num" id="numero"></div>
+      <div class="tv-nome" id="nome"></div>
+      <div class="tv-tempo num" id="tempo"></div>
+    </section>
+    <aside class="tv-lado">
+      <h2>Próximos</h2>
+      <ul class="tv-fila" id="fila"></ul>
+      <div class="tv-qr">
+        <img src="/api/qr.svg" alt="QR Code da fila">
+        <div>
+          <strong>Pegue sua senha</strong>
+          <span>Aponte a câmera do celular · <span class="num" id="tol">5</span> min de tolerância</span>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <button class="btn som" id="som">Ativar som</button>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const pad = (n) => String(n).padStart(2, '0');
+    let estado = null, offset = 0, ultimoChamado = null, somLigado = false, fonte;
+
+    function conectar() {
+      if (fonte) fonte.close();
+      fonte = new EventSource('/api/stream');
+      fonte.onmessage = (e) => {
+        estado = JSON.parse(e.data);
+        offset = estado.agora - Date.now();
+        render();
+      };
+    }
+
+    function render() {
+      const s = estado, a = s.atual;
+      $('tol').textContent = s.limiteMinutos;
+      $('tv').className = 'tv' + (a && a.status === 'chamado' ? ' chamado' : '');
+      if (a) {
+        $('rotulo').textContent = a.status === 'chamado' ? 'Chamando agora' : 'Na cadeira';
+        $('numero').textContent = `Nº ${a.numero}`;
+        $('nome').textContent = a.nome;
+      } else {
+        $('rotulo').textContent = s.estado === 'pausado' ? 'Wagner em pausa' : s.estado === 'fechado' ? 'Fila fechada' : 'Cadeira livre';
+        $('numero').textContent = '';
+        $('nome').textContent = s.estado === 'aberto' ? 'Pegue sua senha pelo QR Code ao lado' : '';
+      }
+      // novo chamado: pisca e toca
+      const chave = a && a.status === 'chamado' ? a.numero + ':' + a.chamadoEm : null;
+      if (chave && chave !== ultimoChamado) {
+        $('tv').classList.add('piscando');
+        setTimeout(() => $('tv').classList.remove('piscando'), 2600);
+        tocar();
+      }
+      ultimoChamado = chave;
+
+      const proximos = s.fila.slice(0, 6);
+      $('fila').innerHTML = proximos.length
+        ? proximos.map((c) => `<li><b class="num">${c.numero}</b><span>${esc(c.nome)}</span></li>`).join('') +
+          (s.fila.length > 6 ? `<li class="mais">e mais ${s.fila.length - 6} esperando</li>` : '')
+        : '<li class="mais">Ninguém esperando</li>';
+      tick();
+    }
+
+    function tick() {
+      const a = estado && estado.atual;
+      if (!a || a.status !== 'chamado') return ($('tempo').innerHTML = '');
+      const r = Math.max(0, a.chamadoEm + estado.limiteMs - (Date.now() + offset));
+      $('tempo').innerHTML = `${pad(Math.floor(r / 60000))}:${pad(Math.floor(r / 1000) % 60)}<small>para se apresentar ao Wagner</small>`;
+    }
+    setInterval(tick, 250);
+
+    function tocar() {
+      if (!somLigado) return;
+      try {
+        const ctx = new AudioContext();
+        [0, 0.3, 0.6].forEach((t, i) => {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.frequency.value = i === 2 ? 1046 : 784;
+          g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+          g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.26);
+          o.connect(g).connect(ctx.destination);
+          o.start(ctx.currentTime + t);
+          o.stop(ctx.currentTime + t + 0.3);
+        });
+      } catch {}
+    }
+
+    // o navegador só deixa tocar som depois de um clique
+    $('som').addEventListener('click', () => { somLigado = true; $('som').hidden = true; tocar(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conectar(); });
+    conectar();
+  </script>
+</body>
+</html>

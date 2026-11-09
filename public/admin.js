@@ -66,6 +66,26 @@ async function acao(id, nomeAcao) {
   }
 }
 
+// X: apaga o registro de vez (cortes de teste, cadastro errado)
+async function apagar(id, nome, dia) {
+  if (!confirm(`Apagar ${nome} de vez?\n\nO registro some da lista e da contagem de cortes. Não dá para desfazer.`)) return;
+  try {
+    await api('apagar', { id });
+    toast(`${nome} apagado`);
+    if (dia) carregarDia(dia);
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+const botaoApagar = (c, dia = '') =>
+  `<button class="btn-x" title="Apagar de vez" aria-label="Apagar ${esc(c.nome)}" onclick="apagar('${c.id}','${esc(c.nome).replace(/'/g, '')}','${dia}')">×</button>`;
+
+$('baixar-planilha').addEventListener('click', (e) => {
+  e.preventDefault();
+  location.href = `/api/admin/exportar?token=${encodeURIComponent(token)}`;
+});
+
 // ---------- Tempo real ----------
 
 async function iniciar() {
@@ -95,10 +115,12 @@ function render() {
   const st = s.stats;
 
   document.querySelectorAll('#estado button').forEach((b) => b.classList.toggle('ativo', b.dataset.estado === s.config.estado));
+  $('data-hoje').textContent = dataPorExtenso(s.dia);
 
   $('k-hoje').textContent = st.cortesHoje;
   $('k-manuais').textContent = st.manuaisHoje ? `${st.manuaisHoje} cadastrados por você` : '';
   $('k-total').textContent = st.cortesTotal;
+  $('k-dias').textContent = `em ${st.diasTrabalhados} ${st.diasTrabalhados === 1 ? 'dia' : 'dias'}`;
   $('k-fila').textContent = st.naFila;
   $('k-espera').textContent = st.naFila ? `~${formatarDuracao(st.naFila * st.mediaMs)} de espera` : 'ninguém esperando';
   $('k-perderam').textContent = st.perderamVez;
@@ -205,23 +227,80 @@ function renderEncerrados(s) {
           <span class="nome">${esc(c.nome)}<br><span class="meta">${c.finalizadoEm ? hora(c.finalizadoEm) : ''}</span></span>
           ${rotulo[c.status]}
           ${c.status !== 'concluido' ? `<button class="btn btn-sm" onclick="acao('${c.id}','reinserir')" title="Coloca de volta no fim da fila">Voltar à fila</button>` : ''}
+          ${botaoApagar(c)}
         </li>`).join('')
     : '<li class="vazio">Nada por aqui ainda.</li>';
 }
 
-function renderPorDia(st) {
-  const max = Math.max(1, ...st.ultimosDias.map((d) => d.total));
-  $('por-dia').innerHTML = st.ultimosDias.slice().reverse().map((d) => {
-    const [ano, mes, dia] = d.dia.split('-').map(Number);
-    const rotulo = d.hoje ? 'Hoje' : new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
-    return `
-    <div class="barra-corte${d.hoje ? ' hoje' : ''}">
-      <span>${rotulo}</span>
-      <span class="valores num"><b>${d.total}</b> ${d.total === 1 ? 'corte' : 'cortes'}</span>
-      <div class="trilho"><i style="width:${(d.total / max) * 100}%"></i></div>
-    </div>`;
-  }).join('');
+// ---------- Dias de atendimento ----------
+
+const paraData = (dia) => { const [a, m, d] = dia.split('-').map(Number); return new Date(a, m - 1, d); };
+
+function dataPorExtenso(dia) {
+  const t = paraData(dia).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
+
+const diasAbertos = new Set(); // dias expandidos (sobrevivem às atualizações em tempo real)
+const listasDosDias = new Map(); // conteúdo já carregado de cada dia
+
+function renderPorDia(st) {
+  const max = Math.max(1, ...st.dias.map((d) => d.cortes));
+  $('por-dia').innerHTML = st.dias.map((d) => {
+    const rotulo = d.hoje ? 'Hoje' : paraData(d.dia).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    const extra = d.perderam ? `${d.perderam} ${d.perderam === 1 ? 'perdeu' : 'perderam'} a vez` : '';
+    return `
+    <details class="dia${d.hoje ? ' hoje' : ''}" data-dia="${d.dia}" ${diasAbertos.has(d.dia) ? 'open' : ''}>
+      <summary class="barra-corte">
+        <span class="dia-rotulo">${rotulo}</span>
+        <span class="trilho"><i style="width:${(d.cortes / max) * 100}%"></i></span>
+        <span class="valores num"><b>${d.cortes}</b> ${d.cortes === 1 ? 'corte' : 'cortes'}</span>
+        ${extra ? `<span class="dia-extra">${extra}</span>` : ''}
+      </summary>
+      <div class="dia-lista" id="lista-${d.dia}">${listasDosDias.get(d.dia) || '<p class="vazio">Carregando…</p>'}</div>
+    </details>`;
+  }).join('');
+  // dias abertos: recarrega (o de hoje muda o tempo todo)
+  for (const dia of diasAbertos) carregarDia(dia);
+}
+
+async function carregarDia(dia) {
+  const r = await fetch(`/api/admin/dia/${dia}`, { headers: { 'x-token': token } });
+  if (!r.ok) return;
+  const { clientes } = await r.json();
+  const rotulo = {
+    concluido: '<span class="tag tag-green">cortou</span>',
+    expirado: '<span class="tag tag-red">perdeu a vez</span>',
+    cancelado: '<span class="tag">saiu</span>',
+    aguardando: '<span class="tag">na fila</span>',
+    chamado: '<span class="tag tag-brass">chamado</span>',
+    atendendo: '<span class="tag tag-green">na cadeira</span>',
+  };
+  const html = clientes.length
+    ? `<ul class="lista">${clientes.map((c) => `
+        <li>
+          <span class="senha num">${c.numero}</span>
+          <span class="nome">${esc(c.nome)}<br><span class="meta">chegou ${hora(c.criadoEm)}${c.telefone ? ' · ' + formatarTelefone(c.telefone) : ''}</span></span>
+          ${rotulo[c.status] || ''}
+          ${['concluido', 'expirado', 'cancelado'].includes(c.status) ? botaoApagar(c, dia) : '<span class="btn-x-vazio"></span>'}
+        </li>`).join('')}</ul>`
+    : '<p class="vazio">Ninguém passou pela fila neste dia.</p>';
+  listasDosDias.set(dia, html);
+  const el = document.getElementById(`lista-${dia}`);
+  if (el) el.innerHTML = html;
+}
+
+// "toggle" não borbulha: escuta na fase de captura
+$('por-dia').addEventListener('toggle', (e) => {
+  const dia = e.target.dataset && e.target.dataset.dia;
+  if (!dia) return;
+  if (e.target.open) {
+    diasAbertos.add(dia);
+    carregarDia(dia);
+  } else {
+    diasAbertos.delete(dia);
+  }
+}, true);
 
 // Máscara do telefone no cadastro manual: (11) 98765-4321
 $('a-tel').addEventListener('input', (e) => {
@@ -281,6 +360,8 @@ document.querySelector('details.config').addEventListener('toggle', (e) => {
   if (!e.target.open || !estado) return;
   $('c-limite').value = estado.config.limiteMinutos;
   $('c-mensagem').value = estado.config.mensagem;
+  $('c-recado').value = estado.config.recado || '';
+  $('c-senhas').value = estado.config.limiteSenhas || '';
 });
 
 $('form-config').addEventListener('submit', async (e) => {
@@ -290,6 +371,8 @@ $('form-config').addEventListener('submit', async (e) => {
     await api('config', {
       limiteMinutos: Number($('c-limite').value),
       mensagem: $('c-mensagem').value,
+      recado: $('c-recado').value,
+      limiteSenhas: Number($('c-senhas').value) || 0,
     });
     toast('Configurações salvas');
   } catch (err) {
@@ -298,7 +381,7 @@ $('form-config').addEventListener('submit', async (e) => {
 });
 
 $('btn-encerrar').addEventListener('click', async () => {
-  if (!confirm('Encerrar o dia? A fila é zerada e as senhas voltam para o Nº 1. Os cortes ficam guardados no total.')) return;
+  if (!confirm('Encerrar o dia agora? A fila é zerada e as senhas voltam para o Nº 1. Os cortes ficam guardados no dia de hoje.\n\n(O dia já vira sozinho às 4h da manhã.)')) return;
   try {
     await api('encerrar-dia');
     toast('Dia encerrado');

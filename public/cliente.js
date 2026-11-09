@@ -35,6 +35,8 @@ function formatarEspera(ms) {
 function render() {
   const s = estado;
   const limiteMin = Math.round(s.limiteMs / 60000);
+  const [a, mes, d] = s.dia.split('-').map(Number);
+  $('data-hoje').textContent = `Fila de ${new Date(a, mes - 1, d).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
 
   // Faixa "agora"
   let agora;
@@ -47,11 +49,25 @@ function render() {
   $('agora-texto').innerHTML = agora;
   $('agora-fila').textContent = `${s.fila.length} ${s.fila.length === 1 ? 'esperando' : 'esperando'}`;
 
+  $('recado').hidden = !s.recado;
+  $('recado').textContent = s.recado || '';
+
   // Qual tela mostrar
   const temSenha = Boolean(s.minha);
+  const esgotado = s.vagas === 0;
+  const semCadastro = s.estado === 'fechado' || esgotado;
   $('tela-senha').hidden = !temSenha;
-  $('tela-cadastro').hidden = temSenha || s.estado === 'fechado';
-  $('tela-fechada').hidden = temSenha || s.estado !== 'fechado';
+  $('tela-cadastro').hidden = temSenha || semCadastro;
+  $('tela-fechada').hidden = temSenha || !semCadastro;
+  if (esgotado && s.estado !== 'fechado') {
+    $('fechada-titulo').textContent = 'Senhas esgotadas';
+    $('fechada-texto').textContent = 'As senhas de hoje acabaram. Fale com o Wagner pessoalmente ou volte amanhã.';
+  } else {
+    $('fechada-titulo').textContent = 'Fila fechada';
+    $('fechada-texto').textContent = 'O Wagner não está recebendo novos clientes agora. Volte mais tarde ou fale com ele pessoalmente.';
+  }
+  $('vagas').hidden = s.vagas === null || s.vagas > 10;
+  $('vagas').innerHTML = s.vagas === 1 ? 'Resta <b>1 senha</b> hoje' : `Restam <b>${s.vagas} senhas</b> hoje`;
   document.querySelectorAll('.tol-min').forEach((el) => (el.textContent = limiteMin));
 
   if (temSenha) renderSenha(s.minha, s, limiteMin);

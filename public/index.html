@@ -16,13 +16,15 @@
   <main class="cliente">
     <header class="cabecalho">
       <div class="brand-name">Barbearia do Wagner</div>
-      <div class="brand-sub">Fila por ordem de chegada</div>
+      <div class="brand-sub" id="data-hoje">Fila por ordem de chegada</div>
     </header>
 
     <div class="agora" id="agora">
       <span id="agora-texto">Conectando…</span>
       <span id="agora-fila" class="num"></span>
     </div>
+
+    <p class="recado" id="recado" hidden></p>
 
     <!-- Cadastro -->
     <section id="tela-cadastro" hidden>
@@ -47,13 +49,14 @@
         </div>
         <button class="btn btn-primary btn-block" type="submit" id="btn-entrar">Entrar na fila</button>
         <p class="erro" id="erro-entrar"></p>
+        <p class="vagas" id="vagas" hidden></p>
       </form>
     </section>
 
     <!-- Fila fechada -->
     <section id="tela-fechada" class="fechada" hidden>
-      <h2>Fila fechada</h2>
-      <p>O Wagner não está recebendo novos clientes agora. Volte mais tarde ou fale com ele pessoalmente.</p>
+      <h2 id="fechada-titulo">Fila fechada</h2>
+      <p id="fechada-texto">O Wagner não está recebendo novos clientes agora. Volte mais tarde ou fale com ele pessoalmente.</p>
     </section>
 
     <!-- Minha senha -->

@@ -409,14 +409,69 @@ input::placeholder, textarea::placeholder { color: var(--tinta-3); }
 .form-linha .field { margin-bottom: 0; }
 .form-linha .btn { padding: 13px 18px; }
 
-/* Cortes por dia */
-.barras { display: grid; gap: 12px; }
-.barra-corte { display: grid; grid-template-columns: 88px 1fr 64px; gap: 12px; align-items: center; font-size: 15px; }
-.barra-corte .trilho { order: 2; height: 14px; background: var(--papel); border-radius: 3px; overflow: hidden; }
+.data-hoje { font-size: 18px; font-weight: 600; margin-top: 4px; }
+
+.atalhos { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 14px; }
+.atalhos a { color: var(--tinta); font-weight: 600; text-underline-offset: 3px; }
+.atalhos a:hover { color: var(--vermelho); }
+
+/* X para apagar registros de vez */
+.btn-x {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--tinta-3);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.btn-x:hover { background: var(--vermelho-claro); color: var(--vermelho); }
+.btn-x-vazio { flex: none; width: 28px; }
+
+.form-linha-2 { grid-template-columns: 1fr 1fr; }
+
+/* Recado do dia na tela do cliente */
+.recado {
+  margin: -16px 0 24px;
+  padding: 12px 16px;
+  background: var(--tinta);
+  color: #fff;
+  border-radius: var(--r-sm);
+  font-weight: 500;
+}
+.vagas { font-size: 14px; color: var(--tinta-2); margin-top: 12px; text-align: center; }
+.vagas b { color: var(--vermelho); }
+
+/* Dias de atendimento */
+.dias { display: grid; }
+.dia { border-top: 1px solid var(--linha); }
+.dia:first-child { border-top: 0; }
+.barra-corte {
+  display: grid;
+  grid-template-columns: 92px 1fr 72px;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 15px;
+  cursor: pointer;
+  list-style: none;
+}
+.barra-corte::-webkit-details-marker { display: none; }
+.dia-rotulo::before { content: '▸'; display: inline-block; width: 14px; color: var(--tinta-3); transition: transform 0.15s; }
+.dia[open] .dia-rotulo::before { transform: rotate(90deg); }
+.dia.hoje .dia-rotulo { font-weight: 700; }
+.barra-corte .trilho { height: 14px; background: var(--papel); border-radius: 3px; overflow: hidden; }
 .barra-corte .trilho i { display: block; height: 100%; background: var(--tinta); border-radius: 3px; }
-.barra-corte.hoje .trilho i { background: var(--vermelho); }
-.barra-corte .valores { order: 3; text-align: right; color: var(--tinta-2); font-size: 14px; }
+.dia.hoje .trilho i { background: var(--vermelho); }
+.barra-corte .valores { text-align: right; color: var(--tinta-2); font-size: 14px; }
 .barra-corte .valores b { color: var(--tinta); font-size: 16px; }
+.dia-extra { grid-column: 2 / -1; font-size: 13px; color: var(--vermelho); }
+.dia-lista { padding: 0 0 12px 14px; }
+.dia-lista .lista li { padding: 8px 0; }
+.dia-lista .senha { font-size: 20px; }
 
 details.config summary { cursor: pointer; font-size: 17px; font-weight: 600; list-style: none; }
 details.config summary::-webkit-details-marker { display: none; }

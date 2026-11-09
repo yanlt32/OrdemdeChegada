@@ -32,7 +32,13 @@
     <header class="topo">
       <div>
         <div class="brand-name">Barbearia do Wagner</div>
+        <div class="data-hoje" id="data-hoje"></div>
         <div class="brand-sub link-clientes" id="link-clientes">Painel do barbeiro</div>
+        <nav class="atalhos">
+          <a href="/cartaz" target="_blank">Cartaz com QR Code</a>
+          <a href="/tv" target="_blank">Tela para TV</a>
+          <a href="#" id="baixar-planilha">Baixar planilha</a>
+        </nav>
       </div>
       <div class="segmentado" id="estado" role="group" aria-label="Situação da fila">
         <button data-estado="aberto"><span class="dot aberto"></span>Aberto</button>
@@ -43,7 +49,7 @@
 
     <section class="kpis">
       <div class="kpi destaque"><span>Cortes hoje</span><b class="num" id="k-hoje">0</b><small id="k-manuais"></small></div>
-      <div class="kpi"><span>Total de cortes</span><b class="num" id="k-total">0</b><small>desde o início</small></div>
+      <div class="kpi"><span>Total da temporada</span><b class="num" id="k-total">0</b><small id="k-dias"></small></div>
       <div class="kpi"><span>Esperando</span><b class="num" id="k-fila">0</b><small id="k-espera"></small></div>
       <div class="kpi"><span>Perderam a vez</span><b class="num" id="k-perderam">0</b><small>hoje</small></div>
       <div class="kpi"><span>Tempo médio</span><b class="num" id="k-media">—</b><small>por corte</small></div>
@@ -72,8 +78,8 @@
         </section>
 
         <section class="card">
-          <h2 class="card-title"><span>Cortes por dia</span><small>últimos 7 dias</small></h2>
-          <div class="barras" id="por-dia"></div>
+          <h2 class="card-title"><span>Dias de atendimento</span><small>toque no dia para ver quem passou</small></h2>
+          <div class="dias" id="por-dia"></div>
         </section>
       </div>
 
@@ -93,9 +99,20 @@
             <summary>Configurações</summary>
             <form id="form-config">
               <div class="field">
-                <label for="c-limite">Tolerância (minutos)</label>
-                <input type="number" id="c-limite" min="1" max="60" required style="max-width: 120px">
+                <label for="c-recado">Recado do dia <span class="hint">(aparece no celular dos clientes)</span></label>
+                <input type="text" id="c-recado" maxlength="200" placeholder="Ex.: Hoje atendo até as 22h. Só dinheiro e Pix.">
               </div>
+              <div class="form-linha form-linha-2">
+                <div class="field">
+                  <label for="c-limite">Tolerância (minutos)</label>
+                  <input type="number" id="c-limite" min="1" max="60" required>
+                </div>
+                <div class="field">
+                  <label for="c-senhas">Máximo de senhas por dia</label>
+                  <input type="number" id="c-senhas" min="0" max="500" placeholder="0 = sem limite">
+                </div>
+              </div>
+              <p class="ajuda" style="margin: -8px 0 16px">Quando acabam as senhas, o celular mostra "senhas esgotadas". Você ainda pode cadastrar na mão.</p>
               <div class="field">
                 <label for="c-mensagem">Mensagem quando chega a vez</label>
                 <textarea id="c-mensagem" rows="4" maxlength="500" required></textarea>
@@ -104,7 +121,7 @@
               <button class="btn btn-primary" type="submit">Salvar</button>
               <p class="erro" id="erro-config"></p>
               <div class="config-rodape">
-                <button class="btn btn-ghost-red" type="button" id="btn-encerrar">Encerrar o dia</button>
+                <button class="btn btn-ghost-red" type="button" id="btn-encerrar" title="O dia já vira sozinho às 4h da manhã">Encerrar o dia agora</button>
                 <button class="btn" type="button" id="btn-sair">Sair do painel</button>
               </div>
             </form>
