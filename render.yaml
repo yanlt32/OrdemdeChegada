@@ -1,19 +1,24 @@
 # Configuração da Render (Blueprint). Em https://dashboard.render.com: New > Blueprint > escolha este repositório.
-# Os dados ficam num Postgres externo (DATABASE_URL), então nenhum deploy apaga a fila nem o histórico.
+# O banco SQLite fica no Persistent Disk (/var/data), que não é apagado nos deploys.
+# Disco só existe em plano pago (Starter).
 services:
   - type: web
     name: fila-barbearia-wagner
     runtime: node
-    plan: starter # o plano free "dorme" após 15 min sem acesso e demora ~1 min para acordar
+    plan: starter
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/saude
+    disk:
+      name: dados
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: "22"
       - key: TZ
         value: America/Sao_Paulo
+      - key: DATA_DIR
+        value: /var/data
       - key: ADMIN_SENHA # senha do painel do Wagner (a Render pede na criação)
-        sync: false
-      - key: DATABASE_URL # link do Postgres (ex.: Neon), a Render pede na criação
         sync: false

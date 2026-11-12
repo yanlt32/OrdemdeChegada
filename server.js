@@ -12,9 +12,9 @@ const PORT = Number(process.env.PORT) || 3000;
 const SENHA_ADMIN = process.env.ADMIN_SENHA || 'wagner123';
 const EM_PRODUCAO = Boolean(process.env.RENDER || process.env.NODE_ENV === 'production');
 
-// Na Render o disco é apagado a cada deploy: sem banco externo, os dados se perderiam.
-if (EM_PRODUCAO && !process.env.DATABASE_URL && !process.env.DATA_DIR) {
-  console.error('ERRO: em produção defina DATABASE_URL (Postgres) ou DATA_DIR (disco persistente). Sem isso, cada deploy apagaria os dados.');
+// Na Render o disco normal é apagado a cada deploy: o banco tem que ficar no Persistent Disk.
+if (EM_PRODUCAO && !process.env.DATA_DIR) {
+  console.error('ERRO: em produção defina DATA_DIR com a pasta do Persistent Disk (ex.: /var/data). Sem isso, cada deploy apagaria o banco.');
   process.exit(1);
 }
 if (EM_PRODUCAO && !process.env.ADMIN_SENHA) {
@@ -22,10 +22,7 @@ if (EM_PRODUCAO && !process.env.ADMIN_SENHA) {
   process.exit(1);
 }
 
-const armazenamento = criarArmazenamento({
-  databaseUrl: process.env.DATABASE_URL,
-  pasta: process.env.DATA_DIR || path.join(__dirname, 'data'),
-});
+const armazenamento = criarArmazenamento({ pasta: process.env.DATA_DIR || path.join(__dirname, 'data') });
 
 const PADRAO = {
   config: {

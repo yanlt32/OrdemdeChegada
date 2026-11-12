@@ -4,14 +4,13 @@
   "description": "Fila por ordem de chegada para a Barbearia do Wagner",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --disable-warning=ExperimentalWarning server.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "dependencies": {
     "express": "^4.21.2",
-    "pg": "^8.13.1",
     "qrcode": "^1.5.4"
   }
 }

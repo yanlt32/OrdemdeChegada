@@ -11,34 +11,27 @@ Sistema simples de fila por ordem de chegada para a temporada de fim de ano. O c
 
 ## Colocar no ar (Render)
 
-Os dados ficam num **Postgres fora do servidor**. Assim **nenhum deploy apaga a fila nem o histórico**. Se o banco não estiver configurado, o servidor se recusa a subir em vez de começar vazio.
+O banco é um **SQLite** (`barbearia.db`) guardado no **Persistent Disk** da Render, que **não é apagado nos deploys**. O disco normal da Render é apagado a cada deploy, então o servidor se recusa a subir sem `DATA_DIR` em vez de começar com o banco vazio.
 
-### 1. Criar o banco (Neon, grátis)
-
-1. Crie uma conta em [neon.tech](https://neon.tech) e um projeto (região **São Paulo**, se tiver).
-2. Copie a **connection string**. Ela começa com `postgresql://` e termina com `?sslmode=require`.
-
-> O Postgres grátis da própria Render **expira em 30 dias**. Por isso o Neon, que não expira.
-
-### 2. Criar o serviço na Render
+O disco só existe em plano pago: **Starter** (US$ 7/mês) + disco de 1 GB (cerca de US$ 0,25/mês).
 
 1. Suba este código no GitHub.
-2. Na Render: **New → Blueprint** e escolha este repositório. O arquivo `render.yaml` já tem tudo configurado.
-3. A Render vai pedir duas variáveis:
-   - `ADMIN_SENHA`: a senha do painel do Wagner.
-   - `DATABASE_URL`: a connection string do Neon.
-4. Pronto. O endereço fica algo como `https://fila-barbearia-wagner.onrender.com`. Abra `/cartaz` e imprima o QR Code.
-
-**Plano:** o `render.yaml` usa o **Starter**. O plano **Free** funciona, mas "dorme" depois de 15 minutos sem acesso e leva cerca de 1 minuto para acordar. Para trocar, mude `plan: starter` para `plan: free`.
+2. Na Render, crie o serviço com **New → Blueprint** e escolha este repositório. O arquivo `render.yaml` já tem tudo (plano, disco e variáveis). A Render vai pedir só a `ADMIN_SENHA`, a senha do painel do Wagner.
+3. Ou, num serviço criado à mão:
+   - **Settings → Instance Type:** Starter.
+   - **Disk:** Mount Path `/var/data`, tamanho 1 GB.
+   - **Environment:** `DATA_DIR=/var/data`, `ADMIN_SENHA=...`, `TZ=America/Sao_Paulo` e `NODE_VERSION=22`.
+4. Confira em `/api/saude`: deve mostrar `"armazenamento":"SQLite"`. Depois abra `/cartaz` e imprima o QR Code.
 
 ### Backups
 
-- Antes de cada virada de dia, uma cópia de tudo é salva no banco (linha `backup-AAAA-MM-DD`).
+- A Render tira uma cópia (snapshot) do disco por dia automaticamente.
+- Antes de cada virada de dia, uma cópia de tudo é salva no próprio banco (linha `backup-AAAA-MM-DD`).
 - No painel, **Baixar planilha** gera um arquivo do Excel com todos os atendimentos da temporada.
 
 ## Rodar no computador
 
-Precisa do [Node.js](https://nodejs.org) 20 ou mais novo.
+Precisa do [Node.js](https://nodejs.org) 22.13 ou mais novo (o SQLite vem embutido nele).
 
 ```bash
 npm install
@@ -48,7 +41,7 @@ npm start
 - **Clientes:** `http://<ip-do-computador>:3000` (o endereço aparece no topo do painel). O celular precisa estar no mesmo Wi‑Fi.
 - **Wagner:** `http://localhost:3000/admin`, senha padrão `wagner123`.
 
-Sem `DATABASE_URL`, os dados ficam em `data/dados.json`. Variáveis opcionais: `ADMIN_SENHA`, `PORT`, `DATA_DIR` (outra pasta de dados) e `PUBLIC_URL` (endereço usado no QR Code).
+Os dados ficam em `data/barbearia.db`. Variáveis opcionais: `ADMIN_SENHA`, `PORT`, `DATA_DIR` (outra pasta para o banco) e `PUBLIC_URL` (endereço usado no QR Code).
 
 ## Como funciona
 
